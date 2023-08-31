@@ -7,6 +7,7 @@ const AuthForm = () => {
   const passwordInputRef = useRef();
 
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
@@ -16,10 +17,14 @@ const submitHandler = (event)=> {
   const enteredEmail = emailInputRef.current.value;
   const enteredPassword = passwordInputRef.current.value;
 
+  setIsLoading(true);
+  let url;
 if(isLogin){
-
+    url='https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyD7VXS70SO74U6Hqx45m2mqu1RMlFZQx0I';
 }else{
-  fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyD7VXS70SO74U6Hqx45m2mqu1RMlFZQx0I',
+    url='https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyD7VXS70SO74U6Hqx45m2mqu1RMlFZQx0I';
+}
+fetch(url,
   {
     method:'POST',
     body: JSON.stringify({
@@ -32,18 +37,27 @@ if(isLogin){
     }
   }
   ).then(res => {
+    setIsLoading(false);
     if(res.ok){
-      alert('successfully created an account');
+      return res.json();
     }else{
       return res.json().then(data => {
-        alert('something went wrong');
+        let errorMessage = 'Authentication failed!';
+        if(data && data.error && data.error.message){
+          errorMessage = data.error.message;
+        } 
+         
+        
+        throw new Error(errorMessage);
       });
     }
+  }).then((data) => {
+    console.log(data);
+  }).catch((err) => {
+    alert(err.message);
   });
 
-}
-
-}
+};
   return (
     <section className={classes.auth}>
       <h1>{isLogin ? 'Login' : 'Sign Up'}</h1>
@@ -62,7 +76,8 @@ if(isLogin){
           />
         </div>
         <div className={classes.actions}>
-          <button>{isLogin ? 'Login' : 'Create Account'}</button>
+          {!isLoading && <button>{isLogin ? 'Login' : 'Create Account'}</button>}
+          {isLoading && <p>Loading...</p>}
           <button
             type='button'
             className={classes.toggle}
