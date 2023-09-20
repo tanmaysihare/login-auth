@@ -57,7 +57,7 @@ fetch(url,
     }
   }).then((data) => {
     authCtx.login(data.idToken);
-    history.replace('/');
+    history.replace('/home');
   }).catch((err) => {
     alert(err.message);
   });
