@@ -1,92 +1,120 @@
-import { useContext, useEffect, useState } from 'react';
-import axios from 'axios'; // Import axios
-
+import { useContext,useEffect, useState } from 'react';
+import Modal from '../UI/Modal';
 import CartItem from './CartItem';
 import classes from './Cart.module.css';
 import CartContext from '../store/cart-context';
 import AuthContext from '../../../store/auth-context';
 
 const Cart = (props) => {
+  const authCtx = useContext(AuthContext); 
   const cartCtx = useContext(CartContext);
-  const authCtx = useContext(AuthContext);
-  const [cartItems, setCartItems] = useState([]);
-  const hasItems = cartItems.length > 0;
-
+  const [isLoading, setIsLoading] = useState(true);
+  const email = authCtx.email;
+  
   useEffect(() => {
-    // Define your user's email (replace 'user@example.com' with the actual email)
-    const userEmail = authCtx.token;
-
-    // Make a GET request to retrieve cart items when the component mounts
-    axios
-      .get(`https://crudcrud.com/api/cart/${userEmail}`)
-      .then((response) => {
-        setCartItems(response.data); // Update cart items in the component state
+    // Fetch user-specific cart data based on props.email
+    fetch(`https://crudcrud.com/api/b50a664780c44bc39b6a482ec9e60e79/cart${email}`, {
+      method: 'GET',
+     
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        // Update cart items in context with the fetched data
+        console.log('Received data:', data);
+        const cartItems = data.map((item) => ({
+          id: item._id, // or use a different field if necessary
+          name: item.name,
+          amount: item.amount,
+          price: item.price,
+        }));
+        cartCtx.replaceCartItems(cartItems); // Make sure you have a replaceCartItems function in your context
+        setIsLoading(false);
       })
       .catch((error) => {
-        // Handle errors
-        console.error('Error fetching cart items:', error);
+        console.error('Error fetching cart data:', error);
+        setIsLoading(false);
       });
-  }, [authCtx.token]);
+  }, []);
+
+
+  const totalAmount = `Rs.${cartCtx.totalAmount.toFixed(2)}`;
+  const hasItems = cartCtx.items.length > 0;
 
   const cartItemRemoveHandler = (id) => {
-    // Define your user's email (replace 'user@example.com' with the actual email)
-    const userEmail = authCtx.token;
-
-    // Make a DELETE request to remove a cart item
-    axios
-      .delete(`https://crudcrud.com/api/cart/${userEmail}/${id}`)
+    // Remove the item from the server-side cart data
+    fetch(`https://crudcrud.com/api/b50a664780c44bc39b6a482ec9e60e79/cart${email}/${id}`, {
+      method: 'DELETE',
+      body: JSON.stringify({
+        id: id,
+         }),
+      headers: { "Content-Type": "application/json" },
+    })
       .then(() => {
-        // Remove the item from the component state
-        setCartItems((prevCartItems) => prevCartItems.filter((item) => item.id !== id));
+        // Update cart items in context after successful removal
+        cartCtx.removeItem(id); 
       })
       .catch((error) => {
-        // Handle errors
         console.error('Error removing cart item:', error);
       });
   };
 
   const cartItemAddHandler = (item) => {
-    // Define your user's email (replace 'user@example.com' with the actual email)
-    const userEmail = authCtx.token;
-
-    // Make a POST request to add a cart item
-    axios
-      .post(`https://crudcrud.com/api/cart/${userEmail}`, item)
+    // Add the item to the server-side cart data
+    fetch(`https://crudcrud.com/api/b50a664780c44bc39b6a482ec9e60e79/cart${email}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        itemId: item.id,
+        name: item.name,
+        amount: item.amount,
+        price: item.price,
+      }),
+      headers: { "Content-Type": "application/json" },
+    })
       .then(() => {
-        // Add the item to the component state
-        setCartItems((prevCartItems) => [...prevCartItems, item]);
+        // Update cart items in context after successful addition
+        cartCtx.addItem({ ...item, amount: 1 });
       })
       .catch((error) => {
-        // Handle errors
         console.error('Error adding cart item:', error);
       });
   };
+  
 
-  const cartItemsList = cartItems.map((item) => (
-    <CartItem
-      key={item.id}
-      name={item.name}
-      amount={item.amount}
-      price={item.price}
-      onRemove={() => cartItemRemoveHandler(item.id)}
-      onAdd={() => cartItemAddHandler({ ...item, amount: 1 })}
-    />
-  ));
+  const cartItems = (
+    <ul className={classes['cart-items']}>
+      {cartCtx.items.map((item) => (
+        <CartItem
+          key={item.id}
+          name={item.name}
+          amount={item.amount}
+          price={item.price}
+          onRemove={cartItemRemoveHandler.bind(null, item.id)}
+          onAdd={cartItemAddHandler.bind(null, item)}
+        />
+      ))}
+    </ul>
+  );
 
   return (
-    <div className={classes.cart}>
-      <ul className={classes['cart-items']}>{cartItemsList}</ul>
-      <div className={classes.total}>
-        <span>Total Amount</span>
-        <span>{`Rs.${cartCtx.totalAmount.toFixed(2)}`}</span>
-      </div>
-      <div className={classes.actions}>
-        <button className={classes['button--alt']} onClick={props.onClose}>
-          Close
-        </button>
-        {hasItems && <button className={classes.button}>Order</button>}
-      </div>
-    </div>
+    <Modal onClose={props.onClose}>
+      {isLoading && <p>Loading cart...</p>}
+      {!isLoading && (
+        <>
+          {cartItems}
+          <div className={classes.total}>
+            <span>Total Amount</span>
+            <span>{totalAmount}</span>
+          </div>
+          <div className={classes.actions}>
+            <button className={classes['button--alt']} onClick={props.onClose}>
+              Close
+            </button>
+            {hasItems && <button className={classes.button}>Order</button>}
+          </div>
+        </>
+      )}
+    </Modal>
   );
 };
 

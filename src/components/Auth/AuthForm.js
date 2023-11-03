@@ -3,15 +3,18 @@ import {useHistory} from 'react-router-dom';
 import classes from './AuthForm.module.css';
 import AuthContext from '../../store/auth-context';
 
-const AuthForm = () => {
+const AuthForm = (props) => {
   const history = useHistory();
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
+  const userIdInputRef = useRef();
 
   const authCtx = useContext(AuthContext);
 
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+
+ 
 
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
@@ -20,6 +23,7 @@ const submitHandler = (event)=> {
   event.preventDefault();
   const enteredEmail = emailInputRef.current.value;
   const enteredPassword = passwordInputRef.current.value;
+  const enteredUserId = userIdInputRef.current.value;
 
   setIsLoading(true);
   let url;
@@ -40,7 +44,7 @@ fetch(url,
       'Content-Type': 'application/json'
     }
   }
-  ).then(res => {
+  ).then((res) => {
     setIsLoading(false);
     if(res.ok){
       return res.json();
@@ -56,7 +60,8 @@ fetch(url,
       });
     }
   }).then((data) => {
-    authCtx.login(data.idToken);
+    authCtx.login(data.idToken , enteredUserId);
+    
     history.replace('/home');
   }).catch((err) => {
     alert(err.message);
@@ -69,7 +74,11 @@ fetch(url,
       <form onSubmit={submitHandler}>
         <div className={classes.control}>
           <label htmlFor='email'>Your Email</label>
-          <input type='email' id='email' required ref={emailInputRef} />
+          <input type='text' id='email' required ref={emailInputRef} />
+        </div>
+        <div className={classes.control}>
+          <label htmlFor='userId'>Your User Id</label>
+          <input type='text' id='userId' required ref={userIdInputRef} />
         </div>
         <div className={classes.control}>
           <label htmlFor='password'>Your Password</label>
