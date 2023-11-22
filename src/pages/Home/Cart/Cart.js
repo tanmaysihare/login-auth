@@ -13,7 +13,7 @@ const Cart = (props) => {
   
   useEffect(() => {
     // Fetch user-specific cart data based on props.email
-    fetch(`https://crudcrud.com/api/b50a664780c44bc39b6a482ec9e60e79/cart${email}`, {
+    fetch(`https://crudcrud.com/api/1418bfe8cfcb4148acce3e04c5b9fed1/cart${email}`, {
       method: 'GET',
      
       headers: { "Content-Type": "application/json" },
@@ -43,7 +43,7 @@ const Cart = (props) => {
 
   const cartItemRemoveHandler = (id) => {
     // Remove the item from the server-side cart data
-    fetch(`https://crudcrud.com/api/b50a664780c44bc39b6a482ec9e60e79/cart${email}/${id}`, {
+    fetch(`https://crudcrud.com/api/1418bfe8cfcb4148acce3e04c5b9fed1/cart${email}/${id}`, {
       method: 'DELETE',
       body: JSON.stringify({
         id: id,
@@ -61,7 +61,7 @@ const Cart = (props) => {
 
   const cartItemAddHandler = (item) => {
     // Add the item to the server-side cart data
-    fetch(`https://crudcrud.com/api/b50a664780c44bc39b6a482ec9e60e79/cart${email}`, {
+    fetch(`https://crudcrud.com/api/1418bfe8cfcb4148acce3e04c5b9fed1/cart${email}`, {
       method: 'POST',
       body: JSON.stringify({
         itemId: item.id,
